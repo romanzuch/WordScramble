@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var usedWords = [String]()
     @State private var rootWord = ""
     @State private var newWord = ""
+    @State private var userScore = 0
 
     @State private var errorTitle = ""
     @State private var errorMessage = ""
@@ -29,8 +30,13 @@ struct ContentView: View {
                     Image(systemName: "\($0.count).circle")
                     Text($0)
                 }
+                Text("\(userScore)")
+                    .font(.headline)
             }
             .navigationBarTitle(rootWord)
+            .navigationBarItems(trailing: Button(action: startGame, label: {
+                Text("New")
+            }))
             // you can execute a function on appearance of the ui view
             .onAppear(perform: startGame)
             .alert(isPresented: $showingError) {
@@ -62,8 +68,19 @@ struct ContentView: View {
             wordError(title: "Word not possible", message: "That isn't a real word.")
             return
         }
+        
+        guard isStartWord(word: answer) else {
+            wordError(title: "Is start word", message: "That is the start word.")
+            return
+        }
+        
+        guard isToShort(word: answer) else {
+            wordError(title: "Word too short", message: "Please choose longer than three letters.")
+            return
+        }
 
         usedWords.insert(answer, at: 0)
+        calculateScore(answer)
         newWord = ""
     }
 
@@ -79,6 +96,8 @@ struct ContentView: View {
                 rootWord = allWords.randomElement() ?? "silkworm"
 
                 // If we are here everything has worked, so we can exit
+                usedWords.removeAll()
+                userScore = 0
                 return
             }
         }
@@ -111,6 +130,26 @@ struct ContentView: View {
         let misspelledRange = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
 
         return misspelledRange.location == NSNotFound
+    }
+    
+    func isStartWord(word: String) -> Bool {
+        if word == rootWord {
+            return false
+        } else {
+            return true
+        }
+    }
+    
+    func isToShort(word: String) -> Bool {
+        if word.count < 4 {
+            return false
+        } else {
+            return true
+        }
+    }
+    
+    func calculateScore(_ word: String) {
+        userScore += word.count
     }
 
     func wordError(title: String, message: String) {
